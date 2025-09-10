@@ -254,6 +254,18 @@ public:
         return doctors[i-1];
     }
 
+    bool scheduleConflict(Doctor *doctor, string _date, string _time){ 
+        for (int i = 0; i < appointments.size(); i++){ 
+            Appointment *a = appointments[i]; 
+            if (a->getDoctor() == doctor && 
+                a->getDate() == _date && 
+                a->getTime() == _time && 
+                a->getStatus() == "Scheduled"){ 
+                    return true; 
+                } 
+        } return false; 
+    }
+
     // Destructor: giải phóng bộ nhớ cấp phát động
     ~Clinic(){
         for(int i=0; i < patients.size(); i++) delete patients[i];
@@ -394,6 +406,11 @@ int main(){
             Doctor *chosenDoctor = clinic.chooseDoctor(dChoice);
             if(!chosenDoctor){
                 cout << "Invalid doctor choice...!" << endl;
+                continue;
+            }
+
+            if(clinic.scheduleConflict(chosenDoctor, _date, _time)){
+                cout << "Appointment conflict...! The doctor is already has a schedule on " << _date << " at " << _time << ". Please choose another time or choose another doctor to schedule an appointment...!" << endl;
                 continue;
             }
 

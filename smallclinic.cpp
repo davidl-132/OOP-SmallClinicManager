@@ -8,7 +8,13 @@ class Doctor;
 class Appointment;
 class Patient;
 class ChronicPatient;
+class Prescription;
+class Staff;
+class SecurityGuard;
 class Clinic;
+
+//Danh sách thuốc gợi ý
+vector<string> suggestMedicines = {"Paracetamol 500mg", "Amoxicillin 500mg", "Azithromycin 250mg", "Cefuroxime 250mg", "Metformin 500mg", "Atorvastatin 20mg", "Omeprazole 20mg", "Salbutamol Inhaler", "Lisinopril 10mg", "Ibuprofen 400mg"};
 
 // ==================== Doctor ====================
 // Lớp Doctor lưu trữ thông tin về bác sĩ
@@ -194,6 +200,101 @@ public:
     }
 };
 
+// ==================== Prescription ====================
+// Lớp Prescription lưu thông tin đơn thuốc cho bệnh nhân
+class Prescription {
+private:
+    string presID;              // Mã đơn thuốc
+    string date;                // Ngày kê đơn
+    Patient *patient;           // Bệnh nhân nhận đơn thuốc
+    Doctor *doctor;             // Bác sĩ kê đơn
+    vector<string> medicines;   // Danh sách thuốc
+
+public:
+    // Constructor
+    Prescription(string _presID, Patient *_patient, Doctor *_doctor, string _date) {
+        presID = _presID;
+        patient = _patient;
+        doctor = _doctor;
+        date = _date;
+    }
+
+    // Getter
+    string getPresID(){return presID;}
+    string getDate(){return date;}
+    Patient* getPatient(){return patient;}
+    Doctor* getDoctor(){return doctor;}
+
+    // Thêm thuốc vào đơn
+    void addMedicine(string med){
+        medicines.push_back(med);
+    }
+
+    // Hiển thị thông tin đơn thuốc
+    void displayInfo(){
+        cout << "========== Prescription " << presID << " ==========" << endl;
+        cout << "Patient: " << patient->getName() << " (ID: " << patient->getID() << ")" << endl;
+        cout << "Doctor: " << doctor->getName() << " (Specialty: " << doctor->getSpecialty() << ")" << endl;
+        cout << "Date: " << date << endl;
+        cout << "Medicines: " << endl;
+        if(medicines.empty()){
+            cout << "None...!" << endl;
+        } else {
+            for(int i=0; i<medicines.size(); i++)
+                cout << "\t#" << i+1 << ". "<< medicines[i] << endl;
+        }
+    }
+};
+
+// ==================== Staff ====================
+class Staff{
+private:
+protected:
+    string name;
+    string ID;
+public:
+    Staff(string _name, string _ID){
+        name = _name;
+        ID = _ID;
+    }
+
+    string getName(){return name;}
+    string getID(){return ID;}
+
+    void setName(string _name){name = _name;}
+    void setID(string _ID){ID = _ID;}
+
+    virtual void displayInfo(){
+        cout << "Staff: " << getName() << " (ID: " << getID() << ")" << endl;
+    }
+    virtual string getRole() = 0;
+    virtual ~Staff(){}
+};
+
+// ==================== Security Guard (Staff) ====================
+class SecurityGuard : public Staff{
+private: 
+    vector<string> logs;
+public:
+    SecurityGuard(string _name, string _ID) : Staff(_name,_ID){}
+    void addLogs(string log){logs.push_back(log);}
+    void showLogs() {
+        cout << "===== Logs of Security Guard " << name << " =====" << endl;
+        if (logs.empty()) cout << "No log recorded yet." << endl;
+        else {
+            for (int i = 0; i < logs.size(); i++) {
+                cout << "#" << i+1 << ". " << logs[i] << endl;
+            }
+        }
+    }
+
+    void displayInfo() override {
+        cout << "Security Guard: " << name << " (ID: " << ID << ")" << endl;
+    }
+
+    string getRole() override {return "Security Guard";}
+};
+
 // ==================== Clinic ====================
 // Lớp Clinic quản lý danh sách bệnh nhân, bác sĩ và lịch hẹn
 class Clinic{
@@ -201,11 +302,15 @@ private:
     vector<Patient *> patients;       // Danh sách bệnh nhân
     vector<Doctor *> doctors;         // Danh sách bác sĩ
     vector<Appointment *> appointments;// Danh sách lịch hẹn
+    vector<Prescription *> prescriptions; //Danh sách đơn thuốc
+    vector<Staff *> staffList;
 public:
     // Thêm đối tượng vào danh sách
     void addPatient(Patient *_patient){patients.push_back(_patient);}
     void addDoctor(Doctor *_doctor){doctors.push_back(_doctor);}
     void addAppointment(Appointment *_appointment){appointments.push_back(_appointment);} 
+    void addPrescription(Prescription *_prescription){prescriptions.push_back(_prescription);}
+    void addStaff (Staff *_staff){staffList.push_back(_staff);}
 
     // Hiển thị toàn bộ lịch hẹn
     void displayAppointmentList(){
@@ -237,6 +342,38 @@ public:
         }
     }
 
+    //Hiển thị toàn bộ đơn thuốc
+    void displayPrescriptionList(){
+        cout << endl << "========== Prescriptions List ==========" << endl;
+        for(int i=0; i<prescriptions.size(); i++){
+            cout << "#" << i+1 << ". "; 
+            prescriptions[i]->displayInfo();
+            cout << endl; 
+        }
+    }
+
+    //Hiển thị đơn thuốc theo bệnh nhân
+    void displayPatientPrescription(Patient *p){
+        cout << endl << "========== Prescriptions for " << p->getName() << " ==========" << endl;
+        bool ok = false;
+        for(auto pres : prescriptions){
+            if(pres->getPatient() == p){
+                pres->displayInfo();
+                ok = true;
+            }
+        }
+        if(!ok) cout << "No prescription found for this patient...!" << endl;
+    }
+
+    //Hiển thị danh sách nhân viên
+    void displayStaffList() {
+        cout << "===== Staff List =====" << endl;
+        for (auto s : staffList) {
+            s->displayInfo();
+            cout << "Role: " << s->getRole() << endl << endl;
+        }
+    }
+
     // Chọn lịch hẹn theo số thứ tự
     Appointment* chooseAppointment(int i){
         if(i < 1 || i > appointments.size()) return 0;
@@ -253,6 +390,12 @@ public:
     Doctor* chooseDoctor(int i){
         if(i < 1 || i > doctors.size()) return 0;
         return doctors[i-1];
+    }
+
+    // Chọn bảo vệ theo số thứ tự
+    Staff* chooseStaff(int i){
+    if(i < 1 || i > staffList.size()) return 0;
+    return staffList[i-1];
     }
 
     bool scheduleConflict(Doctor *doctor, string _date, string _time){ 
@@ -272,6 +415,7 @@ public:
         for(int i=0; i < patients.size(); i++) delete patients[i];
         for(int i=0; i < doctors.size(); i++) delete doctors[i];
         for(int i=0; i < appointments.size(); i++) delete appointments[i];
+        for(int i=0; i < prescriptions.size(); i++) delete prescriptions[i];
     }
 };
 
@@ -283,22 +427,40 @@ string generateAppID() {
     return ss.str();
 }
 
+// Hàm tạo mã đơn thuốc ngẫu nhiên
+string generatePresID() {
+    int num = rand() % 10000; // random từ 0 → 999
+    stringstream ss;
+    ss << "PRES" << setw(4) << setfill('0') << num; 
+    return ss.str();
+}
+
 // Hàm menu hiển thị lựa chọn cho người dùng
 void menu(){
     cout << "========== Clinic Manager ==========" << endl;
     cout << "1. Register the patient" << endl;
     cout << "2. Register the doctor" << endl;
+    cout << "= = = = = = = = = = = = = = = = = = =" << endl;
     cout << "3. Schedule the appointment" << endl;
     cout << "4. Cancel the appointment" << endl;
     cout << "5. Attend the appointment" << endl;
+    cout << "= = = = = = = = = = = = = = = = = = =" << endl;
     cout << "6. Check the medical history" << endl;
     cout << "7. Show the Doctors' list" << endl;
     cout << "8. Show the Patients' list" << endl;
     cout << "9. Show the Appointments' list" << endl;
+    cout << "= = = = = = = = = = = = = = = = = = =" << endl;
+    cout << "10. Create Prescription" << endl;
+    cout << "11. Show Prescriptions' list" << endl;
+    cout << "12. Show Patient's prescriptions" << endl;
+    cout << "= = = = = = = = = = = = = = = = = = =" << endl;
+    cout << "13. Register a Security Guard" << endl;
+    cout << "14. Show Staff list" << endl;
+    cout << "15. Show Guard logs" << endl;
+    cout << "= = = = = = = = = = = = = = = = = = =" << endl;
     cout << "0. Exit the Clinic Manager" << endl;
     cout << "====================================" << endl;
     cout << "Choose your choice: ";
-
 }
 
 int main(){
@@ -484,6 +646,107 @@ int main(){
             clinic.displayAppointmentList();
         }
 
+        //OPTION 10: tạo đơn thuốc
+        else if(choice == 10){
+            cout <<"Choose the patient you want to create prescription: ";
+            clinic.displayPatientList();
+            cout <<"Enter the number: ";
+            int pChoice; cin >> pChoice; cin.ignore();
+            Patient *chosenPatient = clinic.choosePatient(pChoice);
+            if(!chosenPatient){
+                cout << "Invalid patient choice...!" << endl;
+                continue;
+            }
+            
+            cout << "Choose the doctor will create that prescription: " << endl;
+            clinic.displayDoctorList();
+            cout << "Enter the number: ";
+            int dChoice; cin >> dChoice; cin.ignore();
+            Doctor *chosenDoctor = clinic.chooseDoctor(dChoice);
+            if(!chosenDoctor){
+                cout << "Invalid doctor choice...!" << endl;
+                continue;
+            }
+
+            string presID = generatePresID();
+            cout << "Enter the prescription date: ";
+            string date; getline(cin,date);
+
+            Prescription *pres = new Prescription(presID,chosenPatient,chosenDoctor,date);
+
+            int numMed;
+            cout << "How many medicines? "; cin >> numMed; cin.ignore();
+            cout << "========== Available Medicines ==========" << endl;
+            for(int i=0; i<suggestMedicines.size(); i++){
+            cout << "#" << i+1 << ". " << suggestMedicines[i] << endl;
+            }
+             cout << "========================================" << endl;
+            for(int i=0; i<numMed; i++){
+                string med;
+                cout << "Medicine #" << i+1 << ": ";
+                getline(cin, med);
+                pres->addMedicine(med);
+            }
+
+            clinic.addPrescription(pres);
+            cout << "Prescription created successfully...!" << endl;
+        }
+
+        //OPTION 11: hiển thị tất cả đơn thuốc
+        else if(choice == 11){
+            clinic.displayPrescriptionList();
+        }
+
+        //OPTION 12: hiển thị đơn thuốc của 1 bệnh nhân
+        else if(choice == 12){
+            cout <<"Choose the patient you want to check prescriptions: ";
+            clinic.displayPatientList();
+            cout <<"Enter the number: ";
+            int pChoice; cin >> pChoice; cin.ignore();
+            Patient *chosenPatient = clinic.choosePatient(pChoice);
+            if(!chosenPatient){
+                cout << "Invalid patient choice...!" << endl;
+                continue;
+            }
+
+            clinic.displayPatientPrescription(chosenPatient);
+        }
+
+        //OPTION 13: đăng ký bảo vệ
+        else if(choice == 13){
+            string _name, _ID;
+            cout << "Enter guard's name: "; getline(cin, _name);
+            cout << "Enter guard's ID: "; getline(cin, _ID);
+            SecurityGuard *g = new SecurityGuard(_name, _ID);
+            clinic.addStaff(g);
+            cout << "Security Guard registered successfully...!" << endl;
+        }
+        
+        //OPTION 14: hiển thị danh sách staff
+        else if(choice == 14){
+            clinic.displayStaffList();
+        }
+
+        //OPTION 15: hiển thị log của bảo vệ
+        else if(choice == 15){
+            cout << "Choose the guard to check logs: " << endl;
+            clinic.displayStaffList();
+            cout << "Enter the number: ";
+            int sChoice; cin >> sChoice; cin.ignore();
+
+            Staff *chosenGuard = clinic.chooseStaff(sChoice);
+            if(!chosenGuard || chosenGuard->getRole() != "Security Guard"){
+                cout << "Invalid choice or not a guard...!" << endl;
+                continue;
+            }
+
+            SecurityGuard *guard = dynamic_cast<SecurityGuard*>(chosenGuard);
+            if(guard){
+                guard->showLogs();
+            }
+        }
+
+
         // OPTION 0: thoát chương trình
         else if(choice == 0){
             cout << "Have a nice day <3...!" << endl;
@@ -498,6 +761,5 @@ int main(){
         system("pause"); // dừng màn hình (Windows)
         system("cls");   // xóa màn hình (Windows)
     }
-
 
 }   

@@ -47,6 +47,7 @@ public:
 // Lớp Patient lưu thông tin bệnh nhân và lịch sử khám bệnh
 class Patient{
 private:
+protected:
     string name;                  // Tên bệnh nhân
     string ID;                    // Mã bệnh nhân
     int age;                      // Tuổi
@@ -497,5 +498,6 @@ int main(){
         system("pause"); // dừng màn hình (Windows)
         system("cls");   // xóa màn hình (Windows)
     }
+
 
 }   
